@@ -34,6 +34,9 @@ class Category(PublishedAndCreatedModel):
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
 
+    def __str__(self):
+        return self.title
+
 
 class Location(PublishedAndCreatedModel):
     name = models.CharField(max_length=256, verbose_name='Название места')
@@ -41,6 +44,9 @@ class Location(PublishedAndCreatedModel):
     class Meta:
         verbose_name = 'местоположение'
         verbose_name_plural = 'Местоположения'
+
+    def __str__(self):
+        return self.name
 
 
 class Post(PublishedAndCreatedModel):
@@ -77,8 +83,42 @@ class Post(PublishedAndCreatedModel):
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
 
+    def __str__(self):
+        return self.title
+
     @property
     def comment_count(self):
+        if '_comment_count' in self.__dict__:
+            return self._comment_count
         if hasattr(self, 'comments'):
             return self.comments.count()
         return 0
+
+
+class Comment(models.Model):
+    text = models.TextField(verbose_name='Текст комментария')
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Публикация',
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор комментария',
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Добавлено',
+    )
+
+    class Meta:
+        ordering = ('created_at',)
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        if len(self.text) > 50:
+            return f'{self.text[:50]}...'
+        return self.text

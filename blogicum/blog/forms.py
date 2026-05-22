@@ -1,8 +1,9 @@
+from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.forms import ModelForm
 
-from .models import Category, Location, Post
+from .models import Category, Comment, Location, Post
 
 User = get_user_model()
 
@@ -26,6 +27,12 @@ class UserEditForm(ModelForm):
         fields = ('first_name', 'last_name', 'username', 'email')
 
 
+class CommentForm(ModelForm):
+    class Meta:
+        model = Comment
+        fields = ('text',)
+
+
 class PostForm(ModelForm):
     class Meta:
         model = Post
@@ -37,12 +44,23 @@ class PostForm(ModelForm):
             'category',
             'image',
         )
+        widgets = {
+            'pub_date': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'},
+                format='%Y-%m-%dT%H:%M',
+            ),
+        }
 
     def __init__(self, *args, user=None, **kwargs):
         self.user = user
         super().__init__(*args, **kwargs)
         self.fields['category'].queryset = Category.objects.all()
         self.fields['location'].queryset = Location.objects.all()
+        self.fields['pub_date'].input_formats = [
+            '%Y-%m-%dT%H:%M',
+            '%Y-%m-%d %H:%M:%S',
+            '%Y-%m-%d %H:%M',
+        ]
 
     def save(self, commit=True):
         instance = super().save(commit=False)
